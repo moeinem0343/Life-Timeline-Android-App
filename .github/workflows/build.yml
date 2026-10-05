@@ -1,0 +1,45 @@
+name: Unzip and Build APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    # باز کردن فایل زیپ پروژه
+    - name: Unzip Project
+      run: |
+        unzip -o project.zip -d .
+        # اگر فایل‌ها درون پوشه فرعی زیپ شده باشند، آن‌ها را به پوشه اصلی منتقل می‌کند
+        if [ -d "LifeTimeline_v0_1" ]; then
+          cp -r LifeTimeline_v0_1/* .
+        fi
+
+    # تنظیم نسخه جاوا
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    # اعطای دسترسی اجرائی به gradlew
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    # ساخت فایل APK
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug
+
+    # آپلود و ذخیره فایل APK خروجی
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: LifeTimeline-Debug-APK
+        path: app/build/outputs/apk/debug/app-debug.apk
